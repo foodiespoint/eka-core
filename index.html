@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EKA System Core</title>
+    <style>
+        :root {
+            --bg: #030712;
+            --card: #111827;
+            --border: #1f2937;
+            --text: #e5e7eb;
+            --accent: #06b6d4;
+            --glow: rgba(6, 182, 212, 0.4);
+            --active: #ef4444;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            height: 100dvh;
+            margin: 0;
+            padding: 24px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .hud-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--accent);
+        }
+
+        .system-status {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            background: var(--card);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .core-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 400px;
+            flex: 1;
+            gap: 20px;
+        }
+
+        .visualizer {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 20px var(--glow);
+            transition: all 0.3s ease;
+        }
+
+        .visualizer.active {
+            border-color: var(--active);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+            animation: corePulse 1.5s infinite;
+        }
+
+        .core-core {
+            width: 80px;
+            height: 80px;
+            background: var(--card);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        @keyframes corePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .transcript-box {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            width: 100%;
+            min-height: 80px;
+            font-size: 1rem;
+            line-height: 1.4;
+            color: #d1d5db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: #030712;
+            font-weight: bold;
+            border: none;
+            width: 100%;
+            max-width: 300px;
+            padding: 14px;
+            font-size: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px var(--glow);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hud-header">
+        <div class="logo">EKA CORE</div>
+        <div class="system-status" id="sysStatus">OFFLINE</div>
+    </div>
+
+    <div class="core-display">
+        <div class="visualizer" id="hudCore">
+            <div class="core-core" id="coreIcon">🛡️</div>
+        </div>
+        <div class="transcript-box" id="transcriptBox">
+            Tap below to request microphone access and initialize local runtime.
+        </div>
+    </div>
+
+    <button class="btn-primary" id="initBtn" onclick="initializeEka()">Initialize System</button>
+
+    <script>
+        const sysStatus = document.getElementById('sysStatus');
+        const hudCore = document.getElementById('hudCore');
+        const coreIcon = document.getElementById('coreIcon');
+        const transcriptBox = document.getElementById('transcriptBox');
+        const initBtn = document.getElementById('initBtn');
+
+        let audioStream = null;
+
+        async function initializeEka() {
+            transcriptBox.textContent = "Requesting microphone permissions...";
+            
+            try {
+                // Direct browser API call guaranteed to work on localhost
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                sysStatus.textContent = "ONLINE";
+                coreIcon.textContent = "🎙️";
+                hudCore.classList.add('active');
+                transcriptBox.textContent = "Microphone linked. Eka core is active on local server.";
+                initBtn.style.display = 'none';
+
+                speak("Eka systems online. Local microphone feed secured.");
+                startListeningLoop();
+
+            } catch (error) {
+                sysStatus.textContent = "ERROR";
+                coreIcon.textContent = "❌";
+                transcriptBox.textContent = "Permission denied or secure context error: " + error.message;
+            }
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.0;
+                utterance.pitch = 0.85;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function startListeningLoop() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                transcriptBox.textContent += " (Note: Speech Recognition engine unavailable in this browser build).";
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event) => {
+                const speechText = event.results[event.results.length - 1][0].transcript.trim();
+                transcriptBox.textContent = `User: "${speechText}"`;
+                processCommand(speechText);
+            };
+
+            recognition.start();
+        }
+
+        function processCommand(cmdText) {
+            const cmd = cmdText.toLowerCase();
+            let reply = "Command not recognized.";
+
+            if (cmd.includes('who are you') || cmd.includes('status')) {
+                reply = "I am Eka. Running locally on your device server.";
+            } else if (cmd.includes('time')) {
+                reply = "Current time is " + new Date().toLocaleTimeString();
+            }
+
+            speak(reply);
+        }
+    </script>
+</body>
+</html>
