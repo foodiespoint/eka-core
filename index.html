@@ -17,7 +17,24 @@
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
+            position: relative;
         }
+
+        /* Top Bar Version Display */
+        .version-badge {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #8b949e;
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            padding: 4px 10px;
+            border-radius: 12px;
+            letter-spacing: 0.5px;
+        }
+
         .status-container {
             font-size: 1.2rem;
             margin-bottom: 20px;
@@ -25,6 +42,7 @@
         }
         .status-online { color: #3fb950; }
         .status-offline { color: #f85149; }
+
         .hud-core {
             width: 140px;
             height: 140px;
@@ -47,6 +65,7 @@
             50% { transform: scale(1.05); box-shadow: 0 0 25px rgba(63, 185, 80, 0.7); }
             100% { transform: scale(1); box-shadow: 0 0 10px rgba(63, 185, 80, 0.4); }
         }
+
         .transcript-box {
             width: 100%;
             max-width: 400px;
@@ -60,6 +79,7 @@
             font-size: 1rem;
             box-sizing: border-box;
         }
+
         button {
             background-color: #238636;
             color: #ffffff;
@@ -74,6 +94,9 @@
     </style>
 </head>
 <body>
+
+    <!-- Version Badge at the top right -->
+    <div class="version-badge" id="appVersion">v1.0.0</div>
 
     <div class="status-container">
         SYSTEM STATUS: <span id="sysStatus" class="status-offline">OFFLINE</span>
@@ -96,7 +119,7 @@
         const transcriptBox = document.getElementById('transcriptBox');
         const initBtn = document.getElementById('initBtn');
 
-        // PASTE YOUR NGROK URL FROM COLAB OUTPUT HERE:
+        // Paste your active ngrok URL from Google Colab here:
         const ENGINE_URL = "https://jogger-evaluate-reply.ngrok-free.dev/transcribe"; 
 
         let mediaRecorder;
