@@ -1,6 +1,6 @@
-const CACHE_NAME = 'eka-core-v4';
+const CACHE_NAME = 'eka-core-v5';
 
-// Install event: cache essential static assets immediately
+// Install event - caches initial app frame and skips waiting immediately
 self.addEventListener('install', (e) => {
     self.skipWaiting();
     e.waitUntil(
@@ -10,7 +10,7 @@ self.addEventListener('install', (e) => {
     );
 });
 
-// Activate event: clear out outdated cache versions
+// Activate event - purges old caches (v1, v2, v3, v4)
 self.addEventListener('activate', (e) => {
     e.waitUntil(
         caches.keys().then((keys) => {
@@ -25,7 +25,7 @@ self.addEventListener('activate', (e) => {
     );
 });
 
-// Fetch event: Network-first strategy to guarantee fresh updates
+// Fetch event - network-first approach to always pull fresh updates from GitHub
 self.addEventListener('fetch', (e) => {
     e.respondWith(
         fetch(e.request)
