@@ -1,6 +1,6 @@
 const CACHE_NAME = 'eka-core-v4';
 
-// Install event - caches essential files and immediately activates
+// Install event: cache essential static assets immediately
 self.addEventListener('install', (e) => {
     self.skipWaiting();
     e.waitUntil(
@@ -10,7 +10,7 @@ self.addEventListener('install', (e) => {
     );
 });
 
-// Activate event - deletes all old caches (v1, v2, v3, etc.)
+// Activate event: clear out outdated cache versions
 self.addEventListener('activate', (e) => {
     e.waitUntil(
         caches.keys().then((keys) => {
@@ -25,7 +25,7 @@ self.addEventListener('activate', (e) => {
     );
 });
 
-// Fetch event - network-first strategy to always get fresh index.html
+// Fetch event: Network-first strategy to guarantee fresh updates
 self.addEventListener('fetch', (e) => {
     e.respondWith(
         fetch(e.request)
