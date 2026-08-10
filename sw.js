@@ -1,4 +1,5 @@
-const CACHE_NAME = 'eka-core-v2';
+const CACHE_NAME = 'eka-core-v3
+';
 const ASSETS = [
   './index.html',
   './manifest.json'
