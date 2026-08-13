@@ -1,7 +1,7 @@
 {
-  "name": "EKA Neural Core",
+  "name": "EKA Neural Core V2",
   "short_name": "EKA",
-  "description": "Custom Neural Voice & Language Core",
+  "description": "Autonomous Custom Neural Voice & Intelligence Assistant",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#080810",
