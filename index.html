@@ -64,7 +64,7 @@
     }
 
     .settings-panel {
-      padding: 12px 20px;
+      padding: 10px 20px;
       background: #0d0d18;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       display: flex;
@@ -78,7 +78,7 @@
       color: var(--text-main);
       padding: 8px 12px;
       border-radius: 8px;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       outline: none;
     }
 
@@ -92,22 +92,22 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-around;
-      padding: 20px;
+      padding: 15px 20px;
       position: relative;
     }
 
     .orb-container {
       position: relative;
-      width: 180px;
-      height: 180px;
+      width: 150px;
+      height: 150px;
       display: flex;
       justify-content: center;
       align-items: center;
     }
 
     .orb {
-      width: 120px;
-      height: 120px;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
       background: radial-gradient(circle, var(--accent-blue) 0%, var(--accent-purple) 100%);
       box-shadow: 0 0 50px rgba(0, 210, 255, 0.4);
@@ -117,8 +117,8 @@
 
     .orb-ring {
       position: absolute;
-      width: 160px;
-      height: 160px;
+      width: 140px;
+      height: 140px;
       border-radius: 50%;
       border: 2px dashed rgba(0, 210, 255, 0.3);
       animation: spin 12s linear infinite;
@@ -149,7 +149,7 @@
 
     @keyframes float {
       0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
+      50% { transform: translateY(-8px); }
     }
 
     @keyframes spin {
@@ -158,7 +158,7 @@
 
     @keyframes pulse {
       0% { transform: scale(1); }
-      100% { transform: scale(1.18); }
+      100% { transform: scale(1.15); }
     }
 
     .conversation-box {
@@ -166,51 +166,77 @@
       max-width: 500px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .card {
       background: var(--card-bg);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 12px;
-      padding: 14px 18px;
-      font-size: 0.95rem;
+      padding: 12px 16px;
+      font-size: 0.9rem;
       line-height: 1.4;
-      min-height: 50px;
+      min-height: 45px;
+      word-break: break-word;
     }
 
     .card-label {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: var(--text-sub);
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
-    .controls {
-      padding: 20px;
+    .controls-bar {
+      padding: 12px 20px 20px 20px;
+      background: #0d0d18;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
-      justify-content: center;
-      margin-bottom: 10px;
+      gap: 10px;
+      align-items: center;
+      max-width: 600px;
+      margin: 0 auto;
+      width: 100%;
     }
 
-    .mic-btn {
-      width: 76px;
-      height: 76px;
+    .chat-input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      padding: 12px 16px;
+      border-radius: 24px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .chat-input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+    }
+
+    .icon-btn {
+      width: 46px;
+      height: 46px;
       border-radius: 50%;
       border: none;
-      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      background: rgba(255, 255, 255, 0.1);
       color: white;
-      font-size: 1.8rem;
+      font-size: 1.2rem;
       display: flex;
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
       transition: all 0.2s ease;
+      flex-shrink: 0;
     }
 
-    .mic-btn:active {
+    .icon-btn.primary {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    }
+
+    .icon-btn:active {
       transform: scale(0.92);
     }
   </style>
@@ -241,22 +267,31 @@
 
     <div class="conversation-box">
       <div class="card">
-        <div class="card-label">You Said</div>
-        <div id="userText">Tap microphone to speak...</div>
+        <div class="card-label">You</div>
+        <div id="userText">Type a message, paste an audio URL, or use mic...</div>
       </div>
       <div class="card">
         <div class="card-label">EKA Response</div>
-        <div id="aiResponse">Awaiting voice input...</div>
+        <div id="aiResponse">Awaiting input...</div>
       </div>
     </div>
   </main>
 
-  <div class="controls">
-    <button id="micBtn" class="mic-btn">🎙️</button>
+  <div class="controls-bar">
+    <input 
+      type="text" 
+      id="chatInput" 
+      class="chat-input" 
+      placeholder="Type a message or paste voice URL..." 
+    />
+    <button id="sendBtn" class="icon-btn primary">➔</button>
+    <button id="micBtn" class="icon-btn">🎙️</button>
   </div>
 
   <script>
     const micBtn = document.getElementById('micBtn');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatInput = document.getElementById('chatInput');
     const userText = document.getElementById('userText');
     const aiResponse = document.getElementById('aiResponse');
     const statusBadge = document.getElementById('statusBadge');
@@ -292,17 +327,16 @@
           const mimeType = mediaRecorder.mimeType || 'audio/webm';
           const audioBlob = new Blob(audioChunks, { type: mimeType });
           audioChunks = [];
-          await sendAudioToEka(audioBlob);
+          await sendPayloadToEka({ blob: audioBlob });
         };
       } catch (err) {
         console.error('Mic error:', err);
-        aiResponse.textContent = 'Microphone permission denied.';
-        setAppState('error', 'No Mic');
       }
     }
 
     initRecorder();
 
+    // Mic Click Handler
     micBtn.addEventListener('click', () => {
       if (!mediaRecorder) {
         initRecorder();
@@ -323,7 +357,23 @@
       }
     });
 
-    async function sendAudioToEka(blob) {
+    // Send Text / Link Handler
+    sendBtn.addEventListener('click', handleSendText);
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleSendText();
+    });
+
+    function handleSendText() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      chatInput.value = '';
+      userText.textContent = text;
+      setAppState('thinking', 'Processing...');
+      sendPayloadToEka({ text: text });
+    }
+
+    // Unified Sender (Handles both Voice Blobs and Text/URLs)
+    async function sendPayloadToEka({ blob = null, text = null }) {
       const endpoint = ngrokUrlInput.value.trim();
       if (!endpoint) {
         alert('Please enter your active Colab ngrok URL.');
@@ -332,8 +382,13 @@
       }
 
       const formData = new FormData();
-      const extension = blob.type.includes('mp4') ? 'mp4' : (blob.type.includes('ogg') ? 'ogg' : 'webm');
-      formData.append('file', blob, `user_voice.${extension}`);
+      if (blob) {
+        const extension = blob.type.includes('mp4') ? 'mp4' : (blob.type.includes('ogg') ? 'ogg' : 'webm');
+        formData.append('file', blob, `user_voice.${extension}`);
+      }
+      if (text) {
+        formData.append('text', text);
+      }
 
       try {
         const response = await fetch(endpoint, {
@@ -345,7 +400,7 @@
         if (!response.ok) throw new Error(`Server status ${response.status}`);
 
         const data = await response.json();
-        userText.textContent = data.text || '(Unclear speech)';
+        userText.textContent = data.text || text || '(Unclear input)';
         aiResponse.textContent = data.response || '(No response)';
 
         if (data.audio) {
