@@ -153,6 +153,12 @@
       animation: pulse 0.5s ease-in-out infinite alternate;
     }
 
+    body.state-error .orb {
+      background: radial-gradient(circle, var(--accent-red) 0%, #330011 100%);
+      box-shadow: 0 0 70px rgba(255, 0, 85, 0.8);
+      animation: none;
+    }
+
     /* Keyframe Animations */
     @keyframes float {
       0%, 100% { transform: translateY(0px); }
@@ -238,7 +244,7 @@
       type="url" 
       id="ngrokUrl" 
       class="url-input" 
-      placeholder="https://xxxx.ngrok-free.app/transcribe" 
+      placeholder="https://xxxx.ngrok-free.dev/transcribe" 
     />
   </div>
 
@@ -292,25 +298,35 @@
 
     // Audio Capture Setup
     async function initRecorder() {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunks.push(event.data);
-      };
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) audioChunks.push(event.data);
+        };
 
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        audioChunks = [];
-        await sendAudioToEka(audioBlob);
-      };
+        mediaRecorder.onstop = async () => {
+          const mimeType = mediaRecorder.mimeType || 'audio/webm';
+          const audioBlob = new Blob(audioChunks, { type: mimeType });
+          audioChunks = [];
+          await sendAudioToEka(audioBlob);
+        };
+      } catch (err) {
+        console.error('Mic Access Denied:', err);
+        aiResponse.textContent = 'Microphone access denied. Enable permissions in your browser.';
+        setAppState('error', 'No Mic');
+      }
     }
 
     initRecorder();
 
     // Push to Talk Toggle
     micBtn.addEventListener('click', () => {
-      if (!mediaRecorder) return;
+      if (!mediaRecorder) {
+        initRecorder();
+        return;
+      }
 
       if (!isRecording) {
         audioChunks = [];
@@ -336,15 +352,22 @@
       }
 
       const formData = new FormData();
-      formData.append('file', blob, 'user_voice.wav');
+      const extension = blob.type.includes('mp4') ? 'mp4' : (blob.type.includes('ogg') ? 'ogg' : 'webm');
+      formData.append('file', blob, `user_voice.${extension}`);
 
       try {
         const response = await fetch(endpoint, {
           method: 'POST',
+          headers: {
+            'ngrok-skip-browser-warning': 'true' // Bypass ngrok HTML landing page
+          },
           body: formData
         });
 
-        if (!response.ok) throw new Error('Backend response error');
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Server ${response.status}: ${errorText}`);
+        }
 
         const data = await response.json();
         userText.textContent = data.text || '(Unclear speech)';
@@ -357,9 +380,9 @@
         }
 
       } catch (err) {
-        console.error(err);
-        aiResponse.textContent = 'Connection failed. Check ngrok URL and Colab server status.';
-        setAppState('', 'Error');
+        console.error('EKA Error:', err);
+        aiResponse.textContent = `Error: ${err.message}`;
+        setAppState('error', 'Error');
       }
     }
 
