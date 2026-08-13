@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>EKA Neural Core</title>
+  <title>EKA Neural Core V2</title>
   <link rel="manifest" href="manifest.json" />
   <style>
     :root {
@@ -34,7 +34,6 @@
       overflow: hidden;
     }
 
-    /* Top Bar */
     header {
       padding: 16px 20px;
       display: flex;
@@ -44,12 +43,6 @@
       backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       z-index: 10;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
     }
 
     .brand-title {
@@ -70,7 +63,6 @@
       color: var(--text-sub);
     }
 
-    /* Settings Collapsible */
     .settings-panel {
       padding: 12px 20px;
       background: #0d0d18;
@@ -94,7 +86,6 @@
       border-color: var(--accent-blue);
     }
 
-    /* Main Display Area */
     main {
       flex: 1;
       display: flex;
@@ -105,7 +96,6 @@
       position: relative;
     }
 
-    /* Animated Neural Visualizer */
     .orb-container {
       position: relative;
       width: 180px;
@@ -134,7 +124,6 @@
       animation: spin 12s linear infinite;
     }
 
-    /* State Visual Overrides */
     body.state-listening .orb {
       background: radial-gradient(circle, var(--accent-green) 0%, var(--accent-blue) 100%);
       box-shadow: 0 0 70px rgba(0, 255, 135, 0.6);
@@ -156,10 +145,8 @@
     body.state-error .orb {
       background: radial-gradient(circle, var(--accent-red) 0%, #330011 100%);
       box-shadow: 0 0 70px rgba(255, 0, 85, 0.8);
-      animation: none;
     }
 
-    /* Keyframe Animations */
     @keyframes float {
       0%, 100% { transform: translateY(0px); }
       50% { transform: translateY(-10px); }
@@ -174,7 +161,6 @@
       100% { transform: scale(1.18); }
     }
 
-    /* Response Cards */
     .conversation-box {
       width: 100%;
       max-width: 500px;
@@ -201,7 +187,6 @@
       margin-bottom: 6px;
     }
 
-    /* Push-to-Talk Mic Control */
     .controls {
       padding: 20px;
       display: flex;
@@ -271,7 +256,6 @@
   </div>
 
   <script>
-    // System State Management
     const micBtn = document.getElementById('micBtn');
     const userText = document.getElementById('userText');
     const aiResponse = document.getElementById('aiResponse');
@@ -282,7 +266,6 @@
     let audioChunks = [];
     let isRecording = false;
 
-    // Load saved ngrok URL from LocalStorage
     const savedUrl = localStorage.getItem('eka_ngrok_url');
     if (savedUrl) ngrokUrlInput.value = savedUrl;
 
@@ -296,7 +279,6 @@
       statusBadge.textContent = badgeText;
     }
 
-    // Audio Capture Setup
     async function initRecorder() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -313,15 +295,14 @@
           await sendAudioToEka(audioBlob);
         };
       } catch (err) {
-        console.error('Mic Access Denied:', err);
-        aiResponse.textContent = 'Microphone access denied. Enable permissions in your browser.';
+        console.error('Mic error:', err);
+        aiResponse.textContent = 'Microphone permission denied.';
         setAppState('error', 'No Mic');
       }
     }
 
     initRecorder();
 
-    // Push to Talk Toggle
     micBtn.addEventListener('click', () => {
       if (!mediaRecorder) {
         initRecorder();
@@ -342,7 +323,6 @@
       }
     });
 
-    // Send Audio to Colab Backend Server
     async function sendAudioToEka(blob) {
       const endpoint = ngrokUrlInput.value.trim();
       if (!endpoint) {
@@ -358,23 +338,18 @@
       try {
         const response = await fetch(endpoint, {
           method: 'POST',
-          headers: {
-            'ngrok-skip-browser-warning': 'true' // Bypass ngrok HTML landing page
-          },
+          headers: { 'ngrok-skip-browser-warning': 'true' },
           body: formData
         });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Server ${response.status}: ${errorText}`);
-        }
+        if (!response.ok) throw new Error(`Server status ${response.status}`);
 
         const data = await response.json();
         userText.textContent = data.text || '(Unclear speech)';
         aiResponse.textContent = data.response || '(No response)';
 
-        if (data.response) {
-          speakResponse(data.response);
+        if (data.audio) {
+          playCustomNeuralAudio(data.audio);
         } else {
           setAppState('', 'Standby');
         }
@@ -386,26 +361,19 @@
       }
     }
 
-    // Browser Text-To-Speech Synthesis
-    function speakResponse(text) {
-      if (!('speechSynthesis' in window)) {
+    function playCustomNeuralAudio(base64Audio) {
+      setAppState('speaking', 'Speaking...');
+      const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
+      
+      audio.onended = () => setAppState('', 'Standby');
+      audio.onerror = () => setAppState('', 'Standby');
+      
+      audio.play().catch(e => {
+        console.error('Audio playback error:', e);
         setAppState('', 'Standby');
-        return;
-      }
-
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-
-      utterance.onstart = () => setAppState('speaking', 'Speaking...');
-      utterance.onend = () => setAppState('', 'Standby');
-      utterance.onerror = () => setAppState('', 'Standby');
-
-      window.speechSynthesis.speak(utterance);
+      });
     }
 
-    // Service Worker Registration for PWA
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }
