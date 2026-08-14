@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <!-- Added viewport-fit=cover to enable hardware safe area insets -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>EKA Neural Core V2 - Seamless Hands-Free</title>
   <link rel="manifest" href="manifest.json" />
   <style>
@@ -15,6 +16,8 @@
       --accent-red: #ff0055;
       --text-main: #f0f4f8;
       --text-sub: #a0aec0;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
     }
 
     * {
@@ -25,17 +28,23 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    body {
+    html, body {
       background-color: var(--bg-color);
       color: var(--text-main);
-      display: flex;
-      flex-direction: column;
+      width: 100%;
+      /* Dynamic viewport height handles collapsible browser toolbars */
       height: 100vh;
+      height: 100dvh;
       overflow: hidden;
     }
 
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
     header {
-      padding: 14px 20px;
+      padding: max(14px, var(--safe-top)) 20px 14px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -43,6 +52,7 @@
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       z-index: 10;
+      flex-shrink: 0;
     }
 
     .brand-title {
@@ -94,6 +104,7 @@
       padding: 8px 20px;
       background: #0d0d18;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      flex-shrink: 0;
     }
 
     .url-input {
@@ -117,22 +128,24 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-around;
-      padding: 15px 20px;
+      padding: 12px 20px;
       position: relative;
+      overflow-y: auto;
     }
 
     .orb-container {
       position: relative;
-      width: 140px;
-      height: 140px;
+      width: 130px;
+      height: 130px;
       display: flex;
       justify-content: center;
       align-items: center;
+      flex-shrink: 0;
     }
 
     .orb {
-      width: 90px;
-      height: 90px;
+      width: 85px;
+      height: 85px;
       border-radius: 50%;
       background: radial-gradient(circle, var(--accent-blue) 0%, var(--accent-purple) 100%);
       box-shadow: 0 0 45px rgba(0, 210, 255, 0.4);
@@ -142,8 +155,8 @@
 
     .orb-ring {
       position: absolute;
-      width: 130px;
-      height: 130px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
       border: 2px dashed rgba(0, 210, 255, 0.3);
       animation: spin 12s linear infinite;
@@ -159,7 +172,7 @@
     body.state-recording .orb {
       background: radial-gradient(circle, #ffaa00 0%, var(--accent-red) 100%);
       box-shadow: 0 0 75px rgba(255, 170, 0, 0.8);
-      transform: scale(1.25);
+      transform: scale(1.22);
     }
 
     body.state-thinking .orb {
@@ -181,7 +194,7 @@
 
     @keyframes float {
       0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-8px); }
+      50% { transform: translateY(-6px); }
     }
 
     @keyframes spin {
@@ -190,7 +203,7 @@
 
     @keyframes pulse {
       0% { transform: scale(1); }
-      100% { transform: scale(1.18); }
+      100% { transform: scale(1.15); }
     }
 
     .conversation-box {
@@ -220,8 +233,9 @@
       margin-bottom: 4px;
     }
 
+    /* Fixed Bottom Controls with Safe Area Cushion */
     .controls-bar {
-      padding: 12px 20px 20px 20px;
+      padding: 12px 20px calc(14px + var(--safe-bottom)) 20px;
       background: #0d0d18;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
@@ -230,6 +244,8 @@
       max-width: 600px;
       margin: 0 auto;
       width: 100%;
+      flex-shrink: 0;
+      z-index: 20;
     }
 
     .chat-input {
@@ -249,8 +265,8 @@
     }
 
     .icon-btn {
-      width: 46px;
-      height: 46px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       border: none;
       background: rgba(255, 255, 255, 0.1);
@@ -281,7 +297,7 @@
     </div>
     <div class="header-actions">
       <button id="autoModeBtn" class="toggle-btn active">
-        <span>⚡</span> Hands-Free Mode: ON
+        <span>⚡</span> Hands-Free: ON
       </button>
       <span id="statusBadge" class="status-badge">Standby</span>
     </div>
@@ -321,8 +337,8 @@
       class="chat-input" 
       placeholder="Type a message or paste voice URL..." 
     />
-    <button id="sendBtn" class="icon-btn primary">➔</button>
-    <button id="micBtn" class="icon-btn">🎙️</button>
+    <button id="sendBtn" class="icon-btn primary" title="Send text">➔</button>
+    <button id="micBtn" class="icon-btn" title="Push to talk">🎙️</button>
   </div>
 
   <script>
@@ -350,8 +366,8 @@
     let silenceTimer = null;
     let vadInterval = null;
 
-    const SILENCE_THRESHOLD_RMS = 0.025; // Minimum energy level to trigger speech detection
-    const SILENCE_WAIT_TIME = 1400;      // Milliseconds of silence to wait before auto-submitting
+    const SILENCE_THRESHOLD_RMS = 0.025;
+    const SILENCE_WAIT_TIME = 1400;
 
     const savedUrl = localStorage.getItem('eka_ngrok_url');
     if (savedUrl) ngrokUrlInput.value = savedUrl;
@@ -366,16 +382,15 @@
       statusBadge.textContent = badgeText;
     }
 
-    // Toggle Hands-Free Auto Mode
     autoModeBtn.addEventListener('click', () => {
       isAutoMode = !isAutoMode;
       if (isAutoMode) {
         autoModeBtn.classList.add('active');
-        autoModeBtn.innerHTML = '<span>⚡</span> Hands-Free Mode: ON';
+        autoModeBtn.innerHTML = '<span>⚡</span> Hands-Free: ON';
         startContinuousVAD();
       } else {
         autoModeBtn.classList.remove('active');
-        autoModeBtn.innerHTML = '<span>⏸️</span> Hands-Free Mode: OFF';
+        autoModeBtn.innerHTML = '<span>⏸️</span> Hands-Free: OFF';
         stopContinuousVAD();
         setAppState('', 'Standby');
       }
@@ -400,19 +415,17 @@
       }
     }
 
-    // Hands-Free Voice Activity Detection (VAD) Loop
     function startContinuousVAD() {
       if (vadInterval) clearInterval(vadInterval);
-      setAppState('listening', 'Listening (Hands-Free)...');
+      setAppState('listening', 'Listening...');
 
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
       vadInterval = setInterval(() => {
-        if (isProcessing || isSpeakingAI) return; // Mute detection while AI is busy
+        if (isProcessing || isSpeakingAI) return;
 
         analyser.getByteTimeDomainData(dataArray);
 
-        // Compute RMS (Volume Energy)
         let sumSquares = 0.0;
         for (let i = 0; i < dataArray.length; i++) {
           const norm = (dataArray[i] - 128) / 128;
@@ -420,7 +433,6 @@
         }
         const rms = Math.sqrt(sumSquares / dataArray.length);
 
-        // Speech Detected
         if (rms > SILENCE_THRESHOLD_RMS) {
           if (!isUserTalking) {
             isUserTalking = true;
@@ -430,9 +442,7 @@
             clearTimeout(silenceTimer);
             silenceTimer = null;
           }
-        } 
-        // Silence Detected after speech
-        else if (isUserTalking && !silenceTimer) {
+        } else if (isUserTalking && !silenceTimer) {
           silenceTimer = setTimeout(() => {
             stopActualRecordingAndSend();
           }, SILENCE_WAIT_TIME);
@@ -476,7 +486,6 @@
       }
     }
 
-    // Manual Mic Click Fallback
     micBtn.addEventListener('click', async () => {
       await initAudioEngine();
       if (mediaRecorder && mediaRecorder.state === 'recording') {
@@ -486,7 +495,6 @@
       }
     });
 
-    // Send Text / Link Handler
     sendBtn.addEventListener('click', handleSendText);
     chatInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') handleSendText();
@@ -500,7 +508,6 @@
       sendPayloadToEka({ text: text });
     }
 
-    // Unified Network Sender
     async function sendPayloadToEka({ blob = null, text = null }) {
       const endpoint = ngrokUrlInput.value.trim();
       if (!endpoint) {
@@ -576,7 +583,6 @@
       });
     }
 
-    // Auto-init mic on first click anywhere
     window.addEventListener('click', () => {
       if (!audioContext) initAudioEngine();
     }, { once: true });
