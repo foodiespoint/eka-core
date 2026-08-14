@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>EKA Neural Core V2</title>
+  <title>EKA Neural Core V2 - Seamless Hands-Free</title>
   <link rel="manifest" href="manifest.json" />
   <style>
     :root {
@@ -35,12 +35,12 @@
     }
 
     header {
-      padding: 16px 20px;
+      padding: 14px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(18, 18, 32, 0.8);
-      backdrop-filter: blur(10px);
+      background: rgba(18, 18, 32, 0.85);
+      backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       z-index: 10;
     }
@@ -54,6 +54,33 @@
       -webkit-text-fill-color: transparent;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toggle-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-sub);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-btn.active {
+      background: rgba(0, 255, 135, 0.15);
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+      box-shadow: 0 0 10px rgba(0, 255, 135, 0.3);
+    }
+
     .status-badge {
       font-size: 0.75rem;
       padding: 4px 10px;
@@ -64,15 +91,13 @@
     }
 
     .settings-panel {
-      padding: 10px 20px;
+      padding: 8px 20px;
       background: #0d0d18;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      display: flex;
-      gap: 10px;
     }
 
     .url-input {
-      flex: 1;
+      width: 100%;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: var(--text-main);
@@ -98,48 +123,55 @@
 
     .orb-container {
       position: relative;
-      width: 150px;
-      height: 150px;
+      width: 140px;
+      height: 140px;
       display: flex;
       justify-content: center;
       align-items: center;
     }
 
     .orb {
-      width: 100px;
-      height: 100px;
+      width: 90px;
+      height: 90px;
       border-radius: 50%;
       background: radial-gradient(circle, var(--accent-blue) 0%, var(--accent-purple) 100%);
-      box-shadow: 0 0 50px rgba(0, 210, 255, 0.4);
-      transition: all 0.4s ease;
+      box-shadow: 0 0 45px rgba(0, 210, 255, 0.4);
+      transition: all 0.3s ease;
       animation: float 4s ease-in-out infinite;
     }
 
     .orb-ring {
       position: absolute;
-      width: 140px;
-      height: 140px;
+      width: 130px;
+      height: 130px;
       border-radius: 50%;
       border: 2px dashed rgba(0, 210, 255, 0.3);
       animation: spin 12s linear infinite;
     }
 
+    /* Reactive States */
     body.state-listening .orb {
       background: radial-gradient(circle, var(--accent-green) 0%, var(--accent-blue) 100%);
-      box-shadow: 0 0 70px rgba(0, 255, 135, 0.6);
+      box-shadow: 0 0 70px rgba(0, 255, 135, 0.7);
       transform: scale(1.15);
+    }
+
+    body.state-recording .orb {
+      background: radial-gradient(circle, #ffaa00 0%, var(--accent-red) 100%);
+      box-shadow: 0 0 75px rgba(255, 170, 0, 0.8);
+      transform: scale(1.25);
     }
 
     body.state-thinking .orb {
       background: radial-gradient(circle, var(--accent-purple) 0%, var(--accent-red) 100%);
-      box-shadow: 0 0 70px rgba(157, 0, 255, 0.6);
-      animation: pulse 0.8s ease-in-out infinite alternate;
+      box-shadow: 0 0 70px rgba(157, 0, 255, 0.7);
+      animation: pulse 0.7s ease-in-out infinite alternate;
     }
 
     body.state-speaking .orb {
       background: radial-gradient(circle, var(--accent-blue) 0%, var(--accent-green) 100%);
-      box-shadow: 0 0 80px rgba(0, 210, 255, 0.8);
-      animation: pulse 0.5s ease-in-out infinite alternate;
+      box-shadow: 0 0 80px rgba(0, 210, 255, 0.85);
+      animation: pulse 0.4s ease-in-out infinite alternate;
     }
 
     body.state-error .orb {
@@ -158,7 +190,7 @@
 
     @keyframes pulse {
       0% { transform: scale(1); }
-      100% { transform: scale(1.15); }
+      100% { transform: scale(1.18); }
     }
 
     .conversation-box {
@@ -247,7 +279,12 @@
     <div class="brand">
       <span class="brand-title">EKA AI</span>
     </div>
-    <span id="statusBadge" class="status-badge">Standby</span>
+    <div class="header-actions">
+      <button id="autoModeBtn" class="toggle-btn active">
+        <span>⚡</span> Hands-Free Mode: ON
+      </button>
+      <span id="statusBadge" class="status-badge">Standby</span>
+    </div>
   </header>
 
   <div class="settings-panel">
@@ -268,11 +305,11 @@
     <div class="conversation-box">
       <div class="card">
         <div class="card-label">You</div>
-        <div id="userText">Type a message, paste an audio URL, or use mic...</div>
+        <div id="userText">Start speaking naturally or type below...</div>
       </div>
       <div class="card">
         <div class="card-label">EKA Response</div>
-        <div id="aiResponse">Awaiting input...</div>
+        <div id="aiResponse">Awaiting voice or text input...</div>
       </div>
     </div>
   </main>
@@ -296,10 +333,25 @@
     const aiResponse = document.getElementById('aiResponse');
     const statusBadge = document.getElementById('statusBadge');
     const ngrokUrlInput = document.getElementById('ngrokUrl');
+    const autoModeBtn = document.getElementById('autoModeBtn');
 
+    // System States
+    let isAutoMode = true;
+    let isProcessing = false;
+    let isSpeakingAI = false;
+    let isUserTalking = false;
+
+    // VAD & Web Audio
+    let audioContext = null;
+    let analyser = null;
+    let micStream = null;
     let mediaRecorder = null;
     let audioChunks = [];
-    let isRecording = false;
+    let silenceTimer = null;
+    let vadInterval = null;
+
+    const SILENCE_THRESHOLD_RMS = 0.025; // Minimum energy level to trigger speech detection
+    const SILENCE_WAIT_TIME = 1400;      // Milliseconds of silence to wait before auto-submitting
 
     const savedUrl = localStorage.getItem('eka_ngrok_url');
     if (savedUrl) ngrokUrlInput.value = savedUrl;
@@ -314,46 +366,123 @@
       statusBadge.textContent = badgeText;
     }
 
-    async function initRecorder() {
+    // Toggle Hands-Free Auto Mode
+    autoModeBtn.addEventListener('click', () => {
+      isAutoMode = !isAutoMode;
+      if (isAutoMode) {
+        autoModeBtn.classList.add('active');
+        autoModeBtn.innerHTML = '<span>⚡</span> Hands-Free Mode: ON';
+        startContinuousVAD();
+      } else {
+        autoModeBtn.classList.remove('active');
+        autoModeBtn.innerHTML = '<span>⏸️</span> Hands-Free Mode: OFF';
+        stopContinuousVAD();
+        setAppState('', 'Standby');
+      }
+    });
+
+    async function initAudioEngine() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) audioChunks.push(event.data);
-        };
-
-        mediaRecorder.onstop = async () => {
-          const mimeType = mediaRecorder.mimeType || 'audio/webm';
-          const audioBlob = new Blob(audioChunks, { type: mimeType });
-          audioChunks = [];
-          await sendPayloadToEka({ blob: audioBlob });
-        };
+        if (!micStream) {
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const source = audioContext.createMediaStreamSource(micStream);
+          analyser = audioContext.createAnalyser();
+          analyser.fftSize = 512;
+          source.connect(analyser);
+        }
+        if (isAutoMode) startContinuousVAD();
       } catch (err) {
-        console.error('Mic error:', err);
+        console.error('Microphone initialization failed:', err);
+        setAppState('error', 'No Mic');
       }
     }
 
-    initRecorder();
+    // Hands-Free Voice Activity Detection (VAD) Loop
+    function startContinuousVAD() {
+      if (vadInterval) clearInterval(vadInterval);
+      setAppState('listening', 'Listening (Hands-Free)...');
 
-    // Mic Click Handler
-    micBtn.addEventListener('click', () => {
-      if (!mediaRecorder) {
-        initRecorder();
-        return;
-      }
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-      if (!isRecording) {
+      vadInterval = setInterval(() => {
+        if (isProcessing || isSpeakingAI) return; // Mute detection while AI is busy
+
+        analyser.getByteTimeDomainData(dataArray);
+
+        // Compute RMS (Volume Energy)
+        let sumSquares = 0.0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const norm = (dataArray[i] - 128) / 128;
+          sumSquares += norm * norm;
+        }
+        const rms = Math.sqrt(sumSquares / dataArray.length);
+
+        // Speech Detected
+        if (rms > SILENCE_THRESHOLD_RMS) {
+          if (!isUserTalking) {
+            isUserTalking = true;
+            startActualRecording();
+          }
+          if (silenceTimer) {
+            clearTimeout(silenceTimer);
+            silenceTimer = null;
+          }
+        } 
+        // Silence Detected after speech
+        else if (isUserTalking && !silenceTimer) {
+          silenceTimer = setTimeout(() => {
+            stopActualRecordingAndSend();
+          }, SILENCE_WAIT_TIME);
+        }
+      }, 60);
+    }
+
+    function stopContinuousVAD() {
+      if (vadInterval) clearInterval(vadInterval);
+      if (silenceTimer) clearTimeout(silenceTimer);
+      isUserTalking = false;
+    }
+
+    function startActualRecording() {
+      audioChunks = [];
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      mediaRecorder = new MediaRecorder(micStream, { mimeType: mimeType });
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
         audioChunks = [];
-        mediaRecorder.start();
-        isRecording = true;
-        setAppState('listening', 'Listening...');
-        micBtn.textContent = '⏹️';
-      } else {
+        await sendPayloadToEka({ blob: audioBlob });
+      };
+
+      mediaRecorder.start();
+      setAppState('recording', 'User Speaking...');
+    }
+
+    function stopActualRecordingAndSend() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
-        isRecording = false;
-        setAppState('thinking', 'Processing...');
-        micBtn.textContent = '🎙️';
+      }
+      isUserTalking = false;
+      if (silenceTimer) {
+        clearTimeout(silenceTimer);
+        silenceTimer = null;
+      }
+    }
+
+    // Manual Mic Click Fallback
+    micBtn.addEventListener('click', async () => {
+      await initAudioEngine();
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        stopActualRecordingAndSend();
+      } else {
+        startActualRecording();
       }
     });
 
@@ -368,23 +497,25 @@
       if (!text) return;
       chatInput.value = '';
       userText.textContent = text;
-      setAppState('thinking', 'Processing...');
       sendPayloadToEka({ text: text });
     }
 
-    // Unified Sender (Handles both Voice Blobs and Text/URLs)
+    // Unified Network Sender
     async function sendPayloadToEka({ blob = null, text = null }) {
       const endpoint = ngrokUrlInput.value.trim();
       if (!endpoint) {
-        alert('Please enter your active Colab ngrok URL.');
+        alert('Please enter your active Colab ngrok URL in the settings box.');
         setAppState('', 'Standby');
         return;
       }
 
+      isProcessing = true;
+      setAppState('thinking', 'Processing...');
+
       const formData = new FormData();
       if (blob) {
-        const extension = blob.type.includes('mp4') ? 'mp4' : (blob.type.includes('ogg') ? 'ogg' : 'webm');
-        formData.append('file', blob, `user_voice.${extension}`);
+        const extension = blob.type.includes('mp4') ? 'mp4' : 'webm';
+        formData.append('file', blob, `voice.${extension}`);
       }
       if (text) {
         formData.append('text', text);
@@ -397,37 +528,58 @@
           body: formData
         });
 
-        if (!response.ok) throw new Error(`Server status ${response.status}`);
+        if (!response.ok) throw new Error(`Server status: ${response.status}`);
 
         const data = await response.json();
-        userText.textContent = data.text || text || '(Unclear input)';
+        userText.textContent = data.text || text || '(Unclear speech)';
         aiResponse.textContent = data.response || '(No response)';
 
         if (data.audio) {
           playCustomNeuralAudio(data.audio);
         } else {
-          setAppState('', 'Standby');
+          isProcessing = false;
+          if (isAutoMode) startContinuousVAD();
         }
 
       } catch (err) {
-        console.error('EKA Error:', err);
+        console.error('EKA Fetch Error:', err);
         aiResponse.textContent = `Error: ${err.message}`;
         setAppState('error', 'Error');
+        isProcessing = false;
+        if (isAutoMode) {
+          setTimeout(() => startContinuousVAD(), 2000);
+        }
       }
     }
 
     function playCustomNeuralAudio(base64Audio) {
-      setAppState('speaking', 'Speaking...');
+      isSpeakingAI = true;
+      setAppState('speaking', 'EKA Speaking...');
       const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
-      
-      audio.onended = () => setAppState('', 'Standby');
-      audio.onerror = () => setAppState('', 'Standby');
-      
+
+      const resumeListening = () => {
+        isSpeakingAI = false;
+        isProcessing = false;
+        if (isAutoMode) {
+          startContinuousVAD();
+        } else {
+          setAppState('', 'Standby');
+        }
+      };
+
+      audio.onended = resumeListening;
+      audio.onerror = resumeListening;
+
       audio.play().catch(e => {
-        console.error('Audio playback error:', e);
-        setAppState('', 'Standby');
+        console.error('Playback failed:', e);
+        resumeListening();
       });
     }
+
+    // Auto-init mic on first click anywhere
+    window.addEventListener('click', () => {
+      if (!audioContext) initAudioEngine();
+    }, { once: true });
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(() => {});
